@@ -7,6 +7,7 @@
 
 from scrapy import signals
 from Parsing_SRO.utils_.db_proxy import DB_proxy
+from scrapy import signals
 
 
 class ParsingSroSpiderMiddleware(object):
@@ -63,9 +64,6 @@ class ParsingSroDownloaderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the downloader middleware does not modify the
     # passed objects.
-    data_base = None
-    proxies = None
-    current_proxy = None
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -77,37 +75,29 @@ class ParsingSroDownloaderMiddleware(object):
     def process_request(self, request, spider):
         # Called for each request that goes through the downloader
         # middleware.
-
         # Must either:
         # - return None: continue processing this request
         # - or return a Response object
         # - or return a Request object
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
-        request.meta['proxy'] = self.current_proxy
-        request.meta['download_timeout'] = 30
-        request.meta['max_retry_times'] = 1
+
+
         return None
 
     def process_response(self, request, response, spider):
         # Called with the response returned from the downloader.
         # print('response__ ' + str(response.status))
-        # Must either;
+        # print('response__ ' + str(response.url))
+        # # Must either;
+        return response
         # - return a Response object
         # - return a Request object
         # - or raise IgnoreRequest
-        return response
 
     def process_exception(self, request, exception, spider):
         # Called when a download handler or a process_request()
         # (from other downloader middleware) raises an exception.
-        if self.proxies:
-            self.current_proxy = self.proxies.pop()
-        else:
-            with DB_proxy() as db:
-                self.data_base = db
-                self.proxies = self.data_base.get_all_proxy()
-                self.current_proxy = self.proxies.pop()
         # Must either:
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
@@ -115,8 +105,75 @@ class ParsingSroDownloaderMiddleware(object):
         return request
 
     def spider_opened(self, spider):
-        with DB_proxy() as db:
-            self.data_base = db
-            self.proxies = self.data_base.get_all_proxy()
-            self.current_proxy = self.proxies.pop()
+        # self.current_ip = self.proxyes.pop(0)
         spider.logger.info('Spider opened: %s' % spider.name)
+
+
+class ProxyMiddleware(object):
+    __proxy_current = set()     # Проки, использующиеся для ротации
+    __proxy_active = set()      # Прокси, задействованные в подлючениях
+    __current_index = -1        # Курсор последнего взятого прокси из общего списка
+    __proxy_all = None          # Общий список прокси
+
+    def __init__(self):
+        with DB_proxy() as db:
+            self.__proxy_all = db.get_all_proxy()
+
+    def process_request(self, request, spider):
+        proxy = self.__get_and_activate_proxy()
+        print("request", proxy)
+        self.__set_proxy_to_request(request, proxy)
+        return None
+
+    def process_response(self, request, response, spider):
+        proxy = self.__get_proxy_from_request(request)
+        print("response", proxy)
+        self.__deactivate_proxy(proxy)
+        if response.status // 100 != 2:
+            return request
+        return response
+
+    def process_exception(self, request, exception, spider):
+        proxy = self.__get_proxy_from_request(request)
+        print("exception", proxy)
+        self.__deactivate_proxy(proxy)
+        self.__shift_proxy(proxy)
+        return request
+
+    def __get_next_proxy(self):
+        while True:
+            self.__current_index += 1
+            if self.__current_index >= len(self.__proxy_all):
+                self.__current_index = 0
+            proxy = self.__proxy_all[self.__current_index]
+            if proxy not in self.__proxy_current:
+                return proxy
+
+    def __get_and_activate_proxy(self):
+        inactive = self.__proxy_current - self.__proxy_active
+        if len(inactive) == 0:
+            proxy = self.__get_next_proxy()
+            self.__proxy_current.add(proxy)
+        else:
+            proxy = inactive.pop()
+        self.__proxy_active.add(proxy)
+        print("activate", proxy)
+        print("active", len(self.__proxy_active), self.__proxy_active)
+        return proxy
+
+    def __deactivate_proxy(self, proxy):
+        self.__proxy_active.remove(proxy)
+        print("deactivate", proxy)
+
+    def __shift_proxy(self, proxy):
+        self.__proxy_current.remove(proxy)
+        print("shift", proxy)
+
+    @staticmethod
+    def __get_proxy_from_request(request):
+        return request.meta['proxy']
+
+    @staticmethod
+    def __set_proxy_to_request(request, proxy):
+        request.meta['proxy'] = proxy
+        request.meta['dont_retry'] = True

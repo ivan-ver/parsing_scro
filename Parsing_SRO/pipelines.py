@@ -9,7 +9,7 @@ from Parsing_SRO.utils_.db_company import Database
 
 class ParsingSroPipeline(object):
     companies = set()
-    flush_count = 20
+    flush_count = 5
     db = Database()
 
     def open_spider(self, spider):

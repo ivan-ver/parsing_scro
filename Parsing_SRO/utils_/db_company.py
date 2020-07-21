@@ -1,5 +1,6 @@
 import configparser
-
+# from itemadapter import ItemAdapter
+from itemadapter import ItemAdapter
 import pymysql
 
 
@@ -36,28 +37,19 @@ class Database:
             self._connection.close()
             print('disconnected')
 
-    def get_dict(self, item):
-        res = dict()
-        res['url'] = item['url']
-        res['sro'] = item['sro']
-        res['short_title'] = item['short_title']
-        res['status'] = item['status']
-        res['reg_date'] = item['reg_date']
-        res['inn'] = item['inn']
-        res['ogrn'] = item['ogrn']
-        res['address'] = item['address']
-        res['fio'] = item['fio']
-        res['end_insurance_date'] = item['end_insurance_date']
-        res['insurance_amount'] = item['insurance_amount']
-        res['insurance_company_title'] = item['insurance_company_title']
-        return res
+    @staticmethod
+    def __clean_dict(item_dict):
+        dict((k, ','.join(v)) for k, v in item_dict.items() if isinstance(v, (list, set)))
+        return dict((k, v) for k, v in item_dict.items() if v)
 
     def save_items(self, items):
         for item in items:
-            item_dict = self.get_dict(item)
-            item_dict = dict((k, v) for k, v in item_dict.items() if v!=None)
+            item_dict = ItemAdapter(item).asdict()
+            item_dict = self.__clean_dict(item_dict)
             _columns = ', '.join(item_dict.keys())
             values = ", ".join("'{}'".format(k) for k in item_dict.values())
             sql = "INSERT INTO parsing.reestr_nostroy_ru ({}) VALUES ({})".format(_columns, values)
             self._cursor.execute(sql)
         self._connection.commit()
+
+

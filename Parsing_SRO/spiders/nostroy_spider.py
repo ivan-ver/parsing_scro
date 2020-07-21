@@ -7,7 +7,7 @@ import logging
 
 
 class SroSpiderSpider(scrapy.Spider):
-    name = 'sro_spider'
+    name = 'nostroy_spider'
     main_url = 'http://reestr.nostroy.ru'
     start_urls = ['http://reestr.nostroy.ru/reestr']
     logging.basicConfig(filename='logogo.log',
@@ -25,12 +25,12 @@ class SroSpiderSpider(scrapy.Spider):
         # if next_page:
         #     yield Request(url=self.main_url + next_page, callback=self.parse)
 
-
     def main_info_parse(self, response):
         company = Company()
         company['url'] = response.url
         company['sro'] = response.xpath("//nav[@id='navigation-block']/ul[@class='nav nav-pills']"
-                                        "/li[@class='active']/a/text()").get().split(' ')[-1]
+                                        "/li[@class='active']/a/text()").get()
+        # .split(' ')[-1]
         table = response.xpath("//table[@class='items table']/tbody/tr").extract()[4:-2]
         table_values = dict()
         for row in table:
@@ -53,7 +53,6 @@ class SroSpiderSpider(scrapy.Spider):
                       cb_kwargs=dict(company=company))
 
     def insurance_parse(self, response, company):
-        print()
         if len(response.xpath("//table[@class='items table']/tbody/tr").extract()) == 3:
             company['end_insurance_date'] = None
             company['insurance_amount'] = None
@@ -63,9 +62,9 @@ class SroSpiderSpider(scrapy.Spider):
             company['end_insurance_date'] = table[2]
             company['insurance_amount'] = table[4]
             company['insurance_company_title'] = table[5]
-            print ()
 
         if len(response.xpath("//table[@class='items table']/tbody/tr").extract()) > 4:
             logging.info('Warning! company ' + company['url'] + ' has more then one insurance company')
 
         yield company
+
