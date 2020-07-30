@@ -56,7 +56,6 @@ class Database:
             try:
                 table_name = item.__class__.__name__
                 item_dict = ItemAdapter(item).asdict()
-                # item_dict = self.__clean_dict(item_dict)
                 item_dict = self.__check_size(item_dict)
                 _columns = ', '.join(item_dict.keys())
                 values = ", ".join("'{}'".format(k) for k in item_dict.values())

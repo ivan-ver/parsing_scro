@@ -25,6 +25,7 @@ class SRO_member(scrapy.Item):
     insurance_company_title = scrapy.Field()
     insurance_telephone = scrapy.Field()
 
+
 class sro_reestr_nopriz_ru(scrapy.Item):
     url = scrapy.Field()
     status = scrapy.Field()

@@ -5,7 +5,7 @@ from Parsing_SRO.items import sro_reestr_nopriz_ru
 
 
 class NoprisSrpSpider(scrapy.Spider):
-    name = 'nopris_SRO'
+    name = 'sro_reestr_nopriz_ru'
     start_urls = ['http://reestr.nopriz.ru']
 
     def start_requests(self):
