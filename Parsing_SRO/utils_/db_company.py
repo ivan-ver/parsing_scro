@@ -44,12 +44,20 @@ class Database:
         dict((k, ','.join(v)) for k, v in item_dict.items() if isinstance(v, (list, set)))
         return dict((k, v) for k, v in item_dict.items() if v)
 
+    @staticmethod
+    def __check_size(item_dict):
+        for key, value in item_dict.items():
+            if len(value) > 255:
+                item_dict[key] = value[:254]
+        return item_dict
+
     def save_items(self, items):
         for item in items:
             try:
                 table_name = item.__class__.__name__
                 item_dict = ItemAdapter(item).asdict()
-                item_dict = self.__clean_dict(item_dict)
+                # item_dict = self.__clean_dict(item_dict)
+                item_dict = self.__check_size(item_dict)
                 _columns = ', '.join(item_dict.keys())
                 values = ", ".join("'{}'".format(k) for k in item_dict.values())
                 sql = "INSERT INTO parsing.{} ({}) VALUES ({})".format(table_name, _columns, values)
