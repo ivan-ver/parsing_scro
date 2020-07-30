@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy import Request
-from Parsing_SRO.items import Company
+from Parsing_SRO.items import SRO_member
 from bs4 import BeautifulSoup as bs
 import logging
 
@@ -26,7 +26,7 @@ class SroSpiderSpider(scrapy.Spider):
         #     yield Request(url=self.main_url + next_page, callback=self.parse)
 
     def main_info_parse(self, response):
-        company = Company()
+        company = SRO_member()
         company['url'] = response.url
         company['sro'] = response.xpath("//nav[@id='navigation-block']/ul[@class='nav nav-pills']"
                                         "/li[@class='active']/a/text()").get()

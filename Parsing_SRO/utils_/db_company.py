@@ -1,13 +1,15 @@
 import configparser
-# from itemadapter import ItemAdapter
 from itemadapter import ItemAdapter
 import pymysql
+import logging
 
 
 # noinspection SqlNoDataSourceInspection,SqlResolve
 class Database:
     _connection = None
     _cursor = None
+    logging.basicConfig(filename='dblog.log',
+                        level=logging.INFO)
 
     def __enter__(self):
         self.connect()
@@ -44,12 +46,16 @@ class Database:
 
     def save_items(self, items):
         for item in items:
-            item_dict = ItemAdapter(item).asdict()
-            item_dict = self.__clean_dict(item_dict)
-            _columns = ', '.join(item_dict.keys())
-            values = ", ".join("'{}'".format(k) for k in item_dict.values())
-            sql = "INSERT INTO parsing.reestr_nostroy_ru ({}) VALUES ({})".format(_columns, values)
-            self._cursor.execute(sql)
+            try:
+                table_name = item.__class__.__name__
+                item_dict = ItemAdapter(item).asdict()
+                item_dict = self.__clean_dict(item_dict)
+                _columns = ', '.join(item_dict.keys())
+                values = ", ".join("'{}'".format(k) for k in item_dict.values())
+                sql = "INSERT INTO parsing.{} ({}) VALUES ({})".format(table_name, _columns, values)
+                self._cursor.execute(sql)
+            except pymysql.err.DataError:
+                logging.info("DataError_URL " + str(item['url']))
         self._connection.commit()
 
 

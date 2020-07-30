@@ -8,13 +8,14 @@
 import scrapy
 
 
-class Company(scrapy.Item):
+class SRO_member(scrapy.Item):
     # define the fields for your item here like:
     url = scrapy.Field()
     sro = scrapy.Field()
     short_title = scrapy.Field()
     status = scrapy.Field()
     reg_date = scrapy.Field()
+    reg_number = scrapy.Field()
     inn = scrapy.Field()
     ogrn = scrapy.Field()
     address = scrapy.Field()
@@ -22,4 +23,18 @@ class Company(scrapy.Item):
     end_insurance_date = scrapy.Field()
     insurance_amount = scrapy.Field()
     insurance_company_title = scrapy.Field()
-    pass
+    insurance_telephone = scrapy.Field()
+
+class sro_reestr_nopriz_ru(scrapy.Item):
+    url = scrapy.Field()
+    status = scrapy.Field()
+    reg_number = scrapy.Field()
+    title = scrapy.Field()
+    inn = scrapy.Field()
+    ogrn = scrapy.Field()
+    address = scrapy.Field()
+    telephone = scrapy.Field()
+    email = scrapy.Field()
+    web_site = scrapy.Field()
+
+

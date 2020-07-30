@@ -75,21 +75,23 @@ class ParsingSroDownloaderMiddleware(object):
     def process_request(self, request, spider):
         # Called for each request that goes through the downloader
         # middleware.
+        request.meta['dont_redirect'] = True
         # Must either:
         # - return None: continue processing this request
         # - or return a Response object
         # - or return a Request object
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
-
-
         return None
 
     def process_response(self, request, response, spider):
         # Called with the response returned from the downloader.
-        # print('response__ ' + str(response.status))
-        # print('response__ ' + str(response.url))
+
         # # Must either;
+        print("1-q process_response")
+        if response.status == 302:
+            print('captcha')
+            return request
         return response
         # - return a Response object
         # - return a Request object
@@ -177,3 +179,5 @@ class ProxyMiddleware(object):
     def __set_proxy_to_request(request, proxy):
         request.meta['proxy'] = proxy
         request.meta['dont_retry'] = True
+        # request.meta['dont_redirect'] = True
+
