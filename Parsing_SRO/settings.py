@@ -52,10 +52,10 @@ DOWNLOAD_DELAY = 2
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#    'Parsing_SRO.middlewares.ParsingSroDownloaderMiddleware': 500,
-#    # 'Parsing_SRO.middlewares.ProxyMiddleware': 542,
-# }
+DOWNLOADER_MIDDLEWARES = {
+   'Parsing_SRO.middlewares.ParsingSroDownloaderMiddleware': 500,
+   # 'Parsing_SRO.middlewares.ProxyMiddleware': 542,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html

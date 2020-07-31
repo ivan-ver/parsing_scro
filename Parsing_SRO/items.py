@@ -39,3 +39,16 @@ class sro_reestr_nopriz_ru(scrapy.Item):
     web_site = scrapy.Field()
 
 
+class sro_reestr_nostroy_ru(scrapy.Item):
+    url = scrapy.Field()
+    status = scrapy.Field()
+    reg_number = scrapy.Field()
+    title = scrapy.Field()
+    inn = scrapy.Field()
+    ogrn = scrapy.Field()
+    address = scrapy.Field()
+    telephone = scrapy.Field()
+    email = scrapy.Field()
+    web_site = scrapy.Field()
+
+

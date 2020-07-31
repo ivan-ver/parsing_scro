@@ -64,6 +64,54 @@ class ParsingSroDownloaderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the downloader middleware does not modify the
     # passed objects.
+    proxy_list = [
+        'http://95.38.14.16:8080',
+        'http://105.27.238.166:80',
+        'http://105.27.237.25:80',
+        'http://60.51.170.27:80',
+        'http://196.27.119.131:80',
+        'http://54.38.218.213:6582',
+        'http://82.81.169.142:80',
+        'http://91.67.240.45:3128',
+        'http://139.5.71.70:23500',
+        'http://185.222.59.86:5836',
+        'http://200.85.169.18:47548',
+        'http://175.139.179.65:42580',
+        'http://41.190.95.20:56167',
+        'http://41.190.95.20:56167',
+        'http://208.96.137.130:47744',
+        'http://41.190.92.84:48515',
+        'http://41.75.123.29:59922',
+        'http://41.217.219.49:40310',
+        'http://41.75.123.49:41263',
+        'http://77.28.97.78:50359',
+        'http://104.244.75.218:8080',
+        'http://165.98.53.38:35332',
+        'http://211.24.105.19:47615',
+        'http://85.147.153.34:80',
+        'http://41.190.147.158:54018',
+        'http://103.81.114.182:53281',
+        'http://124.158.88.56:54555',
+        'http://202.131.234.142:39330',
+        'http://43.228.131.115:59874',
+        'http://202.166.216.249:23500',
+        'http://202.179.21.49:23500',
+        'http://37.26.136.181:52271',
+        'http://93.117.72.27:43631',
+        'http://124.41.240.126:31984',
+        'http://95.65.73.200:38956',
+        'http://197.231.186.148:45578',
+        'http://41.72.203.66:38057',
+        'http://82.135.148.201:8081',
+        'http://78.60.203.75:47385',
+        'http://154.73.109.129:53281',
+        'http://13.230.39.33:60088',
+        'http://109.73.188.225:23500',
+        'http://192.117.146.110:80',
+        'http://217.219.31.210:38073'
+    ]
+
+    current_proxy = None
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -75,7 +123,9 @@ class ParsingSroDownloaderMiddleware(object):
     def process_request(self, request, spider):
         # Called for each request that goes through the downloader
         # middleware.
-        request.meta['dont_redirect'] = True
+        request.meta['proxy'] = self.current_proxy
+        request.meta['download_timeout'] = 2
+        print('proxy')
         # Must either:
         # - return None: continue processing this request
         # - or return a Response object
@@ -88,10 +138,6 @@ class ParsingSroDownloaderMiddleware(object):
         # Called with the response returned from the downloader.
 
         # # Must either;
-        print("1-q process_response")
-        if response.status == 302:
-            print('captcha')
-            return request
         return response
         # - return a Response object
         # - return a Request object
@@ -100,6 +146,9 @@ class ParsingSroDownloaderMiddleware(object):
     def process_exception(self, request, exception, spider):
         # Called when a download handler or a process_request()
         # (from other downloader middleware) raises an exception.
+        print('proxy is change')
+        self.proxy_list.append(self.current_proxy)
+        self.current_proxy = self.proxy_list.pop(0)
         # Must either:
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
@@ -107,7 +156,7 @@ class ParsingSroDownloaderMiddleware(object):
         return request
 
     def spider_opened(self, spider):
-        # self.current_ip = self.proxyes.pop(0)
+        self.current_proxy = self.proxy_list.pop(0)
         spider.logger.info('Spider opened: %s' % spider.name)
 
 
@@ -179,5 +228,5 @@ class ProxyMiddleware(object):
     def __set_proxy_to_request(request, proxy):
         request.meta['proxy'] = proxy
         request.meta['dont_retry'] = True
-        # request.meta['dont_redirect'] = True
+        request.meta['dont_redirect'] = True
 

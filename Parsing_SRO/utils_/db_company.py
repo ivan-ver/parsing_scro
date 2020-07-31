@@ -62,7 +62,7 @@ class Database:
                 sql = "INSERT INTO parsing.{} ({}) VALUES ({})".format(table_name, _columns, values)
                 self._cursor.execute(sql)
             except pymysql.err.DataError:
-                logging.info("DataError_URL " + str(item['url']))
+                logging.warning("DataError_URL " + str(item['url']))
         self._connection.commit()
 
 
