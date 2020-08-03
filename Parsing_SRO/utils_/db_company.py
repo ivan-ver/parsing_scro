@@ -62,7 +62,10 @@ class Database:
                 sql = "INSERT INTO parsing.{} ({}) VALUES ({})".format(table_name, _columns, values)
                 self._cursor.execute(sql)
             except pymysql.err.DataError:
-                logging.warning("DataError_URL " + str(item['url']))
+                logging.warning("DB_Error URL:" + str(item['url']))
         self._connection.commit()
 
-
+    def get_all_urls(self, table_name):
+        req = """SELECT url FROM parsing.{}""".format(table_name)
+        self._cursor.execute(req)
+        return [url['url'] for url in self._cursor.fetchall()]

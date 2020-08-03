@@ -7,32 +7,40 @@ import logging
 
 
 class SroSpiderSpider(scrapy.Spider):
-    name = 'nostroy_spider'
+    page = 0
+    name = 'reestr_nostroy_ru'
     main_url = 'http://reestr.nostroy.ru'
     start_urls = ['http://reestr.nostroy.ru/reestr']
     logging.basicConfig(filename='logogo.log',
                         level=logging.INFO)
 
     def start_requests(self):
-        yield Request(url=self.start_urls[0],
-                      callback=self.parse, dont_filter=True)
+        for url in self.start_urls:
+            yield Request(url=url, callback=self.parse, dont_filter=True)
 
     def parse(self, response):
+        self.page += 1
         table = response.xpath("//table[@class='items table table-selectable-row table-striped']/tbody/tr")
         for row in table:
-            company = reestr_nostroy_ru()
-            company['sro'] = row.xpath("td[7]/text()").get()
-            company['ogrn'] = row.xpath("td[4]/text()").get()
-            company['inn'] = row.xpath("td[3]/text()").get()
-            company['status'] = row.xpath("td[5]/text()").extract()[1].strip()
-            url = row.xpath('@rel').get()
-            yield Request(url=self.main_url + url, callback=self.main_info_parse,
-                          dont_filter=True,
-                          cb_kwargs={'company': company})
+            try:
+                company = reestr_nostroy_ru()
+                company['sro'] = row.xpath("td[7]/text()").get()
+                company['ogrn'] = row.xpath("td[4]/text()").get()
+                company['inn'] = row.xpath("td[3]/text()").get()
+                company['status'] = row.xpath("td[5]/text()").extract()[1].strip()
+                yield Request(url=self.main_url + row.xpath('@rel').get(), callback=self.main_info_parse,
+                              dont_filter=True,
+                              cb_kwargs={'company': company})
+            except BaseException:
+                logging.warning("Spider URL:" + self.main_url + row.xpath('@rel').get() + " exept: "+str(BaseException))
 
         next_page = response.xpath("//div[@class='pagination-wrapper']/ul/li/a/@href").extract()[-2]
+        logging.info("page # " + str(self.page))
         if next_page:
-            yield Request(url=self.main_url + next_page, callback=self.parse, dont_filter=True)
+            try:
+                yield Request(url=self.main_url + next_page, callback=self.parse, dont_filter=True)
+            except BaseException:
+                logging.warning("Next_page_error:" + self.main_url + next_page + ",page # " + str(self.page))
 
     def main_info_parse(self, response, company):
         company['url'] = response.url
@@ -48,6 +56,7 @@ class SroSpiderSpider(scrapy.Spider):
         company['reg_date'] = table_values['Дата регистрации']
         company['reg_number'] = table_values['Регистрационный номер']
         company['address'] = table_values['Адрес места']
+        company['telephone'] = table_values['Номер контактного']
         fio = table_values['Фамилия, имя,'].split(' ')
         company['fio'] = fio[-3] + " " + fio[-2] + " " + fio[-1]
 

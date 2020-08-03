@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy import Request
-from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider, Rule
-from Parsing_SRO.items import reestr_nostroy_ru
+from Parsing_SRO.items import reestr_nopriz_ru
 import logging
 
 
 class NoprizSpiderSpider(scrapy.Spider):
-    name = 'nopriz-spider'
+    name = 'reestr_nopriz_ru'
     main_url = 'http://reestr.nopriz.ru'
     start_urls = ['http://reestr.nopriz.ru/reestr']
     page = 0
@@ -23,18 +21,26 @@ class NoprizSpiderSpider(scrapy.Spider):
         self.page += 1
         table_info = response.xpath("//table[@class='table b-table-organizations']/tbody//tr")
         for row in table_info:
-            company = reestr_nostroy_ru()
-            info_ = row.xpath("td/text()").extract()
-            company['status'] = info_[2].strip()
-            company['reg_date'] = info_[5]
-            yield Request(url=self.main_url + row.xpath("td/a/@href").get(),
-                          callback=self.parse_main_info,
-                          cb_kwargs={'company': company}, dont_filter=True)
+            try:
+                company = reestr_nopriz_ru()
+                info_ = row.xpath("td/text()").extract()
+                company['sro'] = info_[0]
+                company['status'] = info_[2].strip()
+                company['reg_date'] = info_[5]
+                yield Request(url=self.main_url + row.xpath("td/a/@href").get(),
+                              callback=self.parse_main_info,
+                              cb_kwargs={'company': company}, dont_filter=True)
 
-        next = self.main_url + response.xpath("//div[@class='col-xs-6']/ul/li/a/@href").extract()[-2]
+            except BaseException:
+                logging.warning("Spider URL:" + self.main_url + row.xpath('@rel').get() + " exept: " + str(BaseException))
+
+        next_page = response.xpath("//div[@class='col-xs-6']/ul/li/a/@href").extract()[-2]
         logging.info("page # " + str(self.page))
-        if self.page < 30:
-            yield Request(url=next, callback=self.parse)
+        if next_page:
+            try:
+                yield Request(url=self.main_url + next_page, callback=self.parse)
+            except BaseException:
+                logging.warning("Next_page_error:" + self.main_url + next_page + ",page # " + str(self.page))
 
     def parse_main_info(self, response, company):
         company['url'] = response.url
@@ -43,8 +49,8 @@ class NoprizSpiderSpider(scrapy.Spider):
         values = table[1::2]
         table_info = dict(zip(keys, values))
 
-        company['sro'] = table_info['СРО:']
-        company['short_title'] = table_info['Сокращенное']
+
+        company['title'] = table_info['Полное']
         company['reg_number'] = table_info['Регистрационный'].split(' ')[0]
         company['inn'] = table_info['ИНН:']
         company['ogrn'] = table_info['ОГРН:']
@@ -52,6 +58,8 @@ class NoprizSpiderSpider(scrapy.Spider):
                         + table_info['ФИО,'].split(' ')[-2] + ' ' \
                         + table_info['ФИО,'].split(' ')[-1]
         company['address'] = table_info['Адрес']
+        company['telephone'] = table_info['Номер']
+
 
         yield Request(url=response.url + '/insurance',
                       callback=self.parse_insurance_info,

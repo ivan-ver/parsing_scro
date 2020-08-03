@@ -9,7 +9,6 @@ import scrapy
 
 
 class reestr_nostroy_ru(scrapy.Item):
-    # define the fields for your item here like:
     url = scrapy.Field()
     sro = scrapy.Field()
     title = scrapy.Field()
@@ -18,6 +17,24 @@ class reestr_nostroy_ru(scrapy.Item):
     reg_number = scrapy.Field()
     inn = scrapy.Field()
     ogrn = scrapy.Field()
+    telephone = scrapy.Field()
+    address = scrapy.Field()
+    fio = scrapy.Field()
+    end_insurance_date = scrapy.Field()
+    insurance_amount = scrapy.Field()
+    insurance_company_title = scrapy.Field()
+    insurance_telephone = scrapy.Field()
+
+class reestr_nopriz_ru(scrapy.Item):
+    url = scrapy.Field()
+    sro = scrapy.Field()
+    title = scrapy.Field()
+    status = scrapy.Field()
+    reg_date = scrapy.Field()
+    reg_number = scrapy.Field()
+    inn = scrapy.Field()
+    ogrn = scrapy.Field()
+    telephone = scrapy.Field()
     address = scrapy.Field()
     fio = scrapy.Field()
     end_insurance_date = scrapy.Field()
