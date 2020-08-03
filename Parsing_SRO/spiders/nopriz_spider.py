@@ -3,7 +3,7 @@ import scrapy
 from scrapy import Request
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
-from Parsing_SRO.items import SRO_member
+from Parsing_SRO.items import reestr_nostroy_ru
 import logging
 
 
@@ -23,9 +23,10 @@ class NoprizSpiderSpider(scrapy.Spider):
         self.page += 1
         table_info = response.xpath("//table[@class='table b-table-organizations']/tbody//tr")
         for row in table_info:
-            company = SRO_member()
-            company['status'] = row.xpath("td/text()").extract()[2].strip()
-            company['reg_date'] = row.xpath("td/text()").extract()[5]
+            company = reestr_nostroy_ru()
+            info_ = row.xpath("td/text()").extract()
+            company['status'] = info_[2].strip()
+            company['reg_date'] = info_[5]
             yield Request(url=self.main_url + row.xpath("td/a/@href").get(),
                           callback=self.parse_main_info,
                           cb_kwargs={'company': company}, dont_filter=True)

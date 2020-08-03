@@ -8,11 +8,11 @@
 import scrapy
 
 
-class SRO_member(scrapy.Item):
+class reestr_nostroy_ru(scrapy.Item):
     # define the fields for your item here like:
     url = scrapy.Field()
     sro = scrapy.Field()
-    short_title = scrapy.Field()
+    title = scrapy.Field()
     status = scrapy.Field()
     reg_date = scrapy.Field()
     reg_number = scrapy.Field()

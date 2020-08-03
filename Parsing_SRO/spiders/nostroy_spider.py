@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy import Request
-from Parsing_SRO.items import SRO_member
+from Parsing_SRO.items import reestr_nostroy_ru
 from bs4 import BeautifulSoup as bs
 import logging
 
@@ -15,38 +15,41 @@ class SroSpiderSpider(scrapy.Spider):
 
     def start_requests(self):
         yield Request(url=self.start_urls[0],
-                      callback=self.parse)
+                      callback=self.parse, dont_filter=True)
 
     def parse(self, response):
-        urls = response.xpath('//tbody/tr/@rel').extract()
-        for url in urls:
-            yield Request(url=self.main_url + url, callback=self.main_info_parse)
-        # next_page = response.xpath("//div[@class='pagination-wrapper']/ul/li/a/@href").extract()[-2]
-        # if next_page:
-        #     yield Request(url=self.main_url + next_page, callback=self.parse)
-
-    def main_info_parse(self, response):
-        company = SRO_member()
-        company['url'] = response.url
-        company['sro'] = response.xpath("//nav[@id='navigation-block']/ul[@class='nav nav-pills']"
-                                        "/li[@class='active']/a/text()").get()
-        # .split(' ')[-1]
-        table = response.xpath("//table[@class='items table']/tbody/tr").extract()[4:-2]
-        table_values = dict()
+        table = response.xpath("//table[@class='items table table-selectable-row table-striped']/tbody/tr")
         for row in table:
-            key = bs(row).find('th').text.strip().split(' ')[0] + " " + bs(row).find('th').text.strip().split(' ')[1]
-            value = bs(row).find('td').text.strip()
+            company = reestr_nostroy_ru()
+            company['sro'] = row.xpath("td[7]/text()").get()
+            company['ogrn'] = row.xpath("td[4]/text()").get()
+            company['inn'] = row.xpath("td[3]/text()").get()
+            company['status'] = row.xpath("td[5]/text()").extract()[1].strip()
+            url = row.xpath('@rel').get()
+            yield Request(url=self.main_url + url, callback=self.main_info_parse,
+                          dont_filter=True,
+                          cb_kwargs={'company': company})
+
+        next_page = response.xpath("//div[@class='pagination-wrapper']/ul/li/a/@href").extract()[-2]
+        if next_page:
+            yield Request(url=self.main_url + next_page, callback=self.parse, dont_filter=True)
+
+    def main_info_parse(self, response, company):
+        company['url'] = response.url
+        table = response.xpath("//table[@class='items table']/tbody/tr")
+        table_values = dict()
+        for row in table[3:-1]:
+            text_list = row.xpath('th/text()').get().strip().split(' ')
+            key = text_list[0] + " " + text_list[1]
+            value = row.xpath('td/text()').get()
             table_values[key] = value
 
-        company['short_title'] = table_values['Сокращенное наименование']
-        company['status'] = table_values['Статус члена']
+        company['title'] = table_values['Полное наименование']
         company['reg_date'] = table_values['Дата регистрации']
-        company['inn'] = table_values['Идентификационный номер']
-        company['ogrn'] = table_values['Основной государственный']
+        company['reg_number'] = table_values['Регистрационный номер']
         company['address'] = table_values['Адрес места']
-        company['fio'] = table_values['Фамилия, имя,'].split(' ')[-3] + " " \
-                         + table_values['Фамилия, имя,'].split(' ')[-2] + " " \
-                         + table_values['Фамилия, имя,'].split(' ')[-1]
+        fio = table_values['Фамилия, имя,'].split(' ')
+        company['fio'] = fio[-3] + " " + fio[-2] + " " + fio[-1]
 
         yield Request(url=response.url + '/insurance',
                       callback=self.insurance_parse,
