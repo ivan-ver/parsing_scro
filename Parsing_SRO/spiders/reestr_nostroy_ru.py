@@ -2,8 +2,8 @@
 import scrapy
 from scrapy import Request
 from Parsing_SRO.items import reestr_nostroy_ru
-from bs4 import BeautifulSoup as bs
 import logging
+from Parsing_SRO.utils_.db_company import Database
 
 
 class SroSpiderSpider(scrapy.Spider):
@@ -13,6 +13,11 @@ class SroSpiderSpider(scrapy.Spider):
     start_urls = ['http://reestr.nostroy.ru/reestr']
     logging.basicConfig(filename='logogo.log',
                         level=logging.INFO)
+    all_urls = None
+
+    def __init__(self):
+        with Database() as db:
+            self.all_urls = db.get_all_urls(self.name)
 
     def start_requests(self):
         for url in self.start_urls:
@@ -28,9 +33,11 @@ class SroSpiderSpider(scrapy.Spider):
                 company['ogrn'] = row.xpath("td[4]/text()").get()
                 company['inn'] = row.xpath("td[3]/text()").get()
                 company['status'] = row.xpath("td[5]/text()").extract()[1].strip()
-                yield Request(url=self.main_url + row.xpath('@rel').get(), callback=self.main_info_parse,
-                              dont_filter=True,
-                              cb_kwargs={'company': company})
+                company_url = self.main_url + row.xpath('@rel').get()
+                if company_url not in self.all_urls:
+                    yield Request(url=company_url, callback=self.main_info_parse,
+                                  dont_filter=True,
+                                  cb_kwargs={'company': company})
             except BaseException:
                 logging.warning("Spider URL:" + self.main_url + row.xpath('@rel').get() + " exept: "+str(BaseException))
 

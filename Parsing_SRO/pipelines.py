@@ -9,20 +9,18 @@ from Parsing_SRO.utils_.db_company import Database
 
 class ParsingSroPipeline(object):
     companies = set()
-    flush_count = 10
+    flush_count = 5
     all_urls = None
 
     def open_spider(self, spider):
-        with Database() as db:
-            self.all_urls = db.get_all_urls(spider.name)
+        pass
 
     def close_spider(self, spider):
         with Database() as db:
             db.save_items(self.companies)
 
     def process_item(self, item, spider):
-        if item['url'] not in self.all_urls:
-            self.companies.add(item)
+        self.companies.add(item)
         if len(self.companies) == self.flush_count:
             with Database() as db:
                 db.save_items(self.companies)

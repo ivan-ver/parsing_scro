@@ -83,6 +83,7 @@ class ParsingSroDownloaderMiddleware(object):
         # Called for each request that goes through the downloader
         # middleware.
         request.meta['proxy'] = self.current_proxy
+        request.meta['dont_redirect'] = True
         request.meta['download_timeout'] = 2
         print('proxy')
         # Must either:
@@ -94,10 +95,19 @@ class ParsingSroDownloaderMiddleware(object):
         return None
 
     def process_response(self, request, response, spider):
-        # Called with the response returned from the downloader.
-
+        # Called with the response returned from the downloader
+        print(response.status)
+        if response.status != 200:
+            print('proxy is changed 2')
+            self.proxy_list.append(self.current_proxy)
+            self.current_proxy = self.proxy_list.pop(0)
+            request.meta['proxy'] = self.current_proxy
+            request.meta['dont_redirect'] = True
+            request.meta['download_timeout'] = 2
+            return request
+        else:
         # # Must either;
-        return response
+            return response
         # - return a Response object
         # - return a Request object
         # - or raise IgnoreRequest
@@ -105,7 +115,7 @@ class ParsingSroDownloaderMiddleware(object):
     def process_exception(self, request, exception, spider):
         # Called when a download handler or a process_request()
         # (from other downloader middleware) raises an exception.
-        print('proxy is change')
+        print('proxy is changed')
         self.proxy_list.append(self.current_proxy)
         self.current_proxy = self.proxy_list.pop(0)
         # Must either:

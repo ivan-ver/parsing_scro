@@ -3,6 +3,7 @@ import scrapy
 from scrapy import Request
 from Parsing_SRO.items import reestr_nopriz_ru
 import logging
+from Parsing_SRO.utils_.db_company import Database
 
 
 class NoprizSpiderSpider(scrapy.Spider):
@@ -12,6 +13,11 @@ class NoprizSpiderSpider(scrapy.Spider):
     page = 0
     logging.basicConfig(filename='logogo.log',
                         level=logging.INFO)
+    all_urls = None
+
+    def __init__(self):
+        with Database() as db:
+            self.all_urls = db.get_all_urls(self.name)
 
     def start_requests(self):
         for url in self.start_urls:
@@ -27,16 +33,18 @@ class NoprizSpiderSpider(scrapy.Spider):
                 company['sro'] = info_[0]
                 company['status'] = info_[2].strip()
                 company['reg_date'] = info_[5]
-                yield Request(url=self.main_url + row.xpath("td/a/@href").get(),
-                              callback=self.parse_main_info,
-                              cb_kwargs={'company': company}, dont_filter=True)
+                company_url = self.main_url + row.xpath("td/a/@href").get()
+                if company_url not in self.all_urls:
+                    yield Request(url=self.main_url + row.xpath("td/a/@href").get(),
+                                  callback=self.parse_main_info,
+                                  cb_kwargs={'company': company}, dont_filter=True)
 
             except BaseException:
                 logging.warning("Spider URL:" + self.main_url + row.xpath('@rel').get() + " exept: " + str(BaseException))
 
         next_page = response.xpath("//div[@class='col-xs-6']/ul/li/a/@href").extract()[-2]
         logging.info("page # " + str(self.page))
-        if next_page:
+        if next_page and self.page < 3:
             try:
                 yield Request(url=self.main_url + next_page, callback=self.parse)
             except BaseException:
