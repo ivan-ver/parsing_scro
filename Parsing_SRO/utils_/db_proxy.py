@@ -6,6 +6,10 @@ from pymysql.cursors import DictCursor
 class DB_proxy():
     _connection = None
     _cursor = None
+    protocols = {
+        1: 'http://',
+        2: 'http://'
+    }
 
     def __init__(self):
         self.connect()
@@ -39,9 +43,10 @@ class DB_proxy():
 
     def get_all_proxy(self):
         self._cursor.execute("""
-            SELECT host, port FROM `proxy`.`proxy` order by ping
+            SELECT type, host, port FROM `proxy`.`proxy` order by ping
         """)
-        return ['http://' + i['host'] + ':' + str(i['port']) for i in self._cursor.fetchall()]
+        df = self._cursor.fetchall()
+        return [str(self.protocols[i['type']] + i['host'] + ':' + str(i['port'])) for i in df]
 
 
 

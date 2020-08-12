@@ -28,20 +28,25 @@ class SroSpiderSpider(scrapy.Spider):
         table = response.xpath("//table[@class='items table table-selectable-row table-striped']/tbody/tr")
         for row in table:
             try:
-                company = reestr_nostroy_ru()
-                company['sro'] = row.xpath("td[7]/text()").get()
-                company['ogrn'] = row.xpath("td[4]/text()").get()
-                company['inn'] = row.xpath("td[3]/text()").get()
-                company['status'] = row.xpath("td[5]/text()").extract()[1].strip()
                 company_url = self.main_url + row.xpath('@rel').get()
                 if company_url not in self.all_urls:
+                    company = reestr_nostroy_ru()
+                    company['sro'] = row.xpath("td[7]/text()").get()
+                    company['ogrn'] = row.xpath("td[4]/text()").get()
+                    company['inn'] = row.xpath("td[3]/text()").get()
+                    company['status'] = row.xpath("td[5]/text()").extract()[1].strip()
                     yield Request(url=company_url, callback=self.main_info_parse,
                                   dont_filter=True,
                                   cb_kwargs={'company': company})
+                else:
+                    continue
             except BaseException:
                 logging.warning("Spider URL:" + self.main_url + row.xpath('@rel').get() + " exept: "+str(BaseException))
-
-        next_page = response.xpath("//div[@class='pagination-wrapper']/ul/li/a/@href").extract()[-2]
+        next_page = None
+        try:
+            next_page = response.xpath("//div[@class='pagination-wrapper']/ul/li/a[text()='>']/@href").get()
+        except:
+            logging.warning("No nex page")
         logging.info("page # " + str(self.page))
         if next_page:
             try:

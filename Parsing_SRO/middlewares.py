@@ -8,6 +8,7 @@
 from scrapy import signals
 from Parsing_SRO.utils_.db_proxy import DB_proxy
 from scrapy import signals
+from scrapy import Request
 
 
 class ParsingSroSpiderMiddleware(object):
@@ -66,11 +67,11 @@ class ParsingSroDownloaderMiddleware(object):
     # passed objects.
     proxy_list = None
     current_proxy = None
+    working_proxy = set()
 
     def __init__(self):
         with DB_proxy() as db:
             self.proxy_list = db.get_all_proxy()
-            print()
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -84,8 +85,8 @@ class ParsingSroDownloaderMiddleware(object):
         # middleware.
         request.meta['proxy'] = self.current_proxy
         request.meta['dont_redirect'] = True
-        request.meta['download_timeout'] = 2
-        print('proxy')
+        request.meta['download_timeout'] = 5
+        print('proxy: ' + self.current_proxy)
         # Must either:
         # - return None: continue processing this request
         # - or return a Response object
@@ -98,15 +99,21 @@ class ParsingSroDownloaderMiddleware(object):
         # Called with the response returned from the downloader
         print(response.status)
         if response.status != 200:
-            print('proxy is changed 2')
-            self.proxy_list.append(self.current_proxy)
-            self.current_proxy = self.proxy_list.pop(0)
+            print('proxy is change2')
+            if len(self.proxy_list) > 0:
+                self.current_proxy = self.proxy_list.pop()
+            else:
+                if len(self.working_proxy) > 0:
+                    self.current_proxy = self.working_proxy.pop()
+                else:
+                    with DB_proxy() as db:
+                        self.proxy_list = db.get_all_proxy()
             request.meta['proxy'] = self.current_proxy
             request.meta['dont_redirect'] = True
-            request.meta['download_timeout'] = 2
+            request.meta['download_timeout'] = 5
             return request
         else:
-        # # Must either;
+            self.working_proxy.add(request.meta['proxy'])
             return response
         # - return a Response object
         # - return a Request object
@@ -115,9 +122,15 @@ class ParsingSroDownloaderMiddleware(object):
     def process_exception(self, request, exception, spider):
         # Called when a download handler or a process_request()
         # (from other downloader middleware) raises an exception.
-        print('proxy is changed')
-        self.proxy_list.append(self.current_proxy)
-        self.current_proxy = self.proxy_list.pop(0)
+        print('proxy is change')
+        if len(self.proxy_list) > 0:
+            self.current_proxy = self.proxy_list.pop()
+        else:
+            if len(self.working_proxy) > 0:
+                self.current_proxy = self.working_proxy.pop()
+            else:
+                with DB_proxy() as db:
+                    self.proxy_list = db.get_all_proxy()
         # Must either:
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
@@ -127,6 +140,7 @@ class ParsingSroDownloaderMiddleware(object):
     def spider_opened(self, spider):
         self.current_proxy = self.proxy_list.pop(0)
         spider.logger.info('Spider opened: %s' % spider.name)
+
 
 
 class ProxyMiddleware(object):

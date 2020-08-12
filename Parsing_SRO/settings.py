@@ -22,7 +22,7 @@ NEWSPIDER_MODULE = 'Parsing_SRO.spiders'
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 3
+CONCURRENT_REQUESTS = 12
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -53,8 +53,8 @@ DOWNLOAD_DELAY = 1
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-   'Parsing_SRO.middlewares.ParsingSroDownloaderMiddleware': 500,
-   # 'Parsing_SRO.middlewares.ProxyMiddleware': 542,
+   # 'Parsing_SRO.middlewares.ParsingSroDownloaderMiddleware': 500,
+   'Parsing_SRO.middlewares.ProxyMiddleware': 542,
 }
 
 # Enable or disable extensions
