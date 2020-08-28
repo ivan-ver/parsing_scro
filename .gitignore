@@ -8,3 +8,4 @@ test.py
 _trial_temp
 scrapy.cfg
 proxy_collector_scrapy/spiders/manual_test_proxy.py
+/config/sro_db.cfg

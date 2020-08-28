@@ -20,7 +20,7 @@ class Database:
 
     def _get_conn(self):
         config = configparser.ConfigParser()
-        config.read('config/proxy_db.cfg')
+        config.read('config/sro_db.cfg')
         if 'db_conn' not in config:
             print('db config error')  # TODO correct handling
             exit(1)
@@ -47,8 +47,9 @@ class Database:
     @staticmethod
     def __check_size(item_dict):
         for key, value in item_dict.items():
-            if len(value) > 255:
-                item_dict[key] = value[:254]
+            if len(str(value)) > 255:
+                print()
+                item_dict[key] = value[0:250]
         return item_dict
 
     def save_items(self, items):
@@ -56,16 +57,18 @@ class Database:
             try:
                 table_name = item.__class__.__name__
                 item_dict = ItemAdapter(item).asdict()
+                item_dict = self.__check_size(item_dict)
                 item_dict = self.__clean_dict(item_dict)
                 _columns = ', '.join(item_dict.keys())
                 values = ", ".join("'{}'".format(k) for k in item_dict.values())
-                sql = "INSERT INTO parsing.{} ({}) VALUES ({})".format(table_name, _columns, values)
+                sql = "INSERT IGNORE INTO sro.{} ({}) VALUES ({})".format(table_name, _columns, values)
+                print(sql)
                 self._cursor.execute(sql)
-            except pymysql.err.DataError:
+            except pymysql.err.IntegrityError:
                 logging.warning("DB_Error URL:" + str(item['url']))
         self._connection.commit()
 
     def get_all_urls(self, table_name):
-        req = """SELECT url FROM parsing.{}""".format(table_name)
+        req = """SELECT url FROM sro.{}""".format(table_name)
         self._cursor.execute(req)
         return [url['url'] for url in self._cursor.fetchall()]

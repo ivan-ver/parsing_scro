@@ -7,13 +7,24 @@ from Parsing_SRO.utils_.db_company import Database
 
 
 class SroSpiderSpider(scrapy.Spider):
-    page = 0
+    page = 1072
     name = 'reestr_nostroy_ru'
     main_url = 'http://reestr.nostroy.ru'
-    start_urls = ['http://reestr.nostroy.ru/reestr']
+    start_urls = [
+        # 'http://reestr.nostroy.ru/reestr',
+        'http://reestr.nostroy.ru/reestr?sort=m.id&direction=asc&page=1072',
+    ]
     logging.basicConfig(filename='logogo.log',
                         level=logging.INFO)
     all_urls = None
+
+    custom_settings = {
+        'DOWNLOAD_DELAY': 2,
+        'DOWNLOAD_TIMEOUT': 30,
+        # 'CONCURRENT_REQUESTS_PER_DOMAIN': 5,
+        # 'CONCURRENT_REQUESTS_PER_IP': 5,
+        'CONCURRENT_REQUESTS': 10
+    }
 
     def __init__(self):
         with Database() as db:
@@ -25,6 +36,7 @@ class SroSpiderSpider(scrapy.Spider):
 
     def parse(self, response):
         self.page += 1
+        print("page # " + str(self.page))
         table = response.xpath("//table[@class='items table table-selectable-row table-striped']/tbody/tr")
         for row in table:
             try:
@@ -41,7 +53,8 @@ class SroSpiderSpider(scrapy.Spider):
                 else:
                     continue
             except BaseException:
-                logging.warning("Spider URL:" + self.main_url + row.xpath('@rel').get() + " exept: "+str(BaseException))
+                logging.warning(
+                    "Spider URL:" + self.main_url + row.xpath('@rel').get() + " exept: " + str(BaseException))
         next_page = None
         try:
             next_page = response.xpath("//div[@class='pagination-wrapper']/ul/li/a[text()='>']/@href").get()
@@ -55,23 +68,28 @@ class SroSpiderSpider(scrapy.Spider):
                 logging.warning("Next_page_error:" + self.main_url + next_page + ",page # " + str(self.page))
 
     def main_info_parse(self, response, company):
-        company['url'] = response.url
-        table = response.xpath("//table[@class='items table']/tbody/tr")
-        table_values = dict()
-        for row in table[3:-1]:
-            text_list = row.xpath('th/text()').get().strip().split(' ')
-            key = text_list[0] + " " + text_list[1]
-            value = row.xpath('td/text()').get()
-            table_values[key] = value
+        try:
+            company['url'] = response.url
+            table = response.xpath("//table[@class='items table']/tbody/tr")
+            table_values = dict()
+            for row in table[3:-1]:
+                text_list = row.xpath('th/text()').get().strip().split(' ')
+                key = text_list[0] + " " + text_list[1]
+                value = row.xpath('td/text()').get()
+                table_values[key] = value
 
-        company['title'] = table_values['Полное наименование']
-        company['reg_date'] = table_values['Дата регистрации']
-        company['reg_number'] = table_values['Регистрационный номер']
-        company['address'] = table_values['Адрес места']
-        company['telephone'] = table_values['Номер контактного']
-        fio = table_values['Фамилия, имя,'].split(' ')
-        company['fio'] = fio[-3] + " " + fio[-2] + " " + fio[-1]
-
+            company['title'] = table_values['Полное наименование']
+            company['reg_date'] = table_values['Дата регистрации']
+            company['reg_number'] = table_values['Регистрационный номер']
+            company['address'] = table_values['Адрес места']
+            company['telephone'] = table_values['Номер контактного']
+            fio = table_values['Фамилия, имя,'].split(' ')
+            try:
+                company['fio'] = fio[-3] + " " + fio[-2] + " " + fio[-1]
+            except:
+                company['fio'] = fio[-2] + " " + fio[-1]
+        except:
+            print()
         yield Request(url=response.url + '/insurance',
                       callback=self.insurance_parse,
                       cb_kwargs=dict(company=company))
@@ -82,13 +100,19 @@ class SroSpiderSpider(scrapy.Spider):
             company['insurance_amount'] = None
             company['insurance_company_title'] = None
         else:
-            table = response.xpath("//table[@class='items table']/tbody/tr[4]/td/text()").extract()
-            company['end_insurance_date'] = table[2]
-            company['insurance_amount'] = table[4]
-            company['insurance_company_title'] = table[5]
-
-        if len(response.xpath("//table[@class='items table']/tbody/tr").extract()) > 4:
-            logging.info('Warning! company ' + company['url'] + ' has more then one insurance company')
-
+            table = response.xpath("//table[@class='items table']/tbody/tr[4]")
+            main_res = set()
+            for row in table:
+                a = row.xpath("td/text()").extract()[4].strip()
+                t = row.xpath("td/text()").extract()[5].strip()
+                tel = row.xpath("td/text()").extract()[2].strip()
+                main_res.add(a + '!' + t + '!' + tel)
+            company['insurance_amount'] = ','.join([i.split("!")[0] for i in main_res])
+            company['insurance_company_title'] = ','.join([i.split("!")[1] for i in main_res])
+            company['end_insurance_date'] = ','.join([i.split("!")[2] for i in main_res])
+            self.all_urls.append(company['url'])
         yield company
 
+    @staticmethod
+    def close(spider, reason):
+        return super().close(spider, reason)
