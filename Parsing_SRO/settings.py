@@ -13,7 +13,7 @@ BOT_NAME = 'Parsing_SRO'
 
 SPIDER_MODULES = ['Parsing_SRO.spiders']
 NEWSPIDER_MODULE = 'Parsing_SRO.spiders'
-
+ROTATING_PROXY_LIST_PATH = 'BROKER/proxies.txt'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'Parsing_SRO (+http://www.yourdomain.com)'
@@ -22,15 +22,17 @@ NEWSPIDER_MODULE = 'Parsing_SRO.spiders'
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 12
+# CONCURRENT_REQUESTS = 8
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 1
+# DOWNLOAD_DELAY = 2
+# DOWNLOAD_TIMEOUT = 15
 # The download delay setting will honor only one of:
 # CONCURRENT_REQUESTS_PER_DOMAIN = 10
 # CONCURRENT_REQUESTS_PER_IP = 10
+PROXY_POOL_ENABLED = True
 
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False
@@ -54,8 +56,12 @@ DOWNLOAD_DELAY = 1
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
    # 'Parsing_SRO.middlewares.ParsingSroDownloaderMiddleware': 500,
-   'Parsing_SRO.middlewares.ProxyMiddleware': 542,
+   # 'Parsing_SRO.ProxyMiddleware.ProxyMiddleware': 500,
 }
+
+ROTATED_PROXY_ENABLED = True
+PROXY_STORAGE = 'scrapy_rotated_proxy.extensions.file_storage.FileProxyStorage'
+PROXY_FILE_PATH = 'BROKER/proxies.txt'
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
