@@ -55,17 +55,26 @@ class Database:
     def save_items(self, items):
         for item in items:
             table_name = item.__class__.__name__
+            item_dict = ItemAdapter(item).asdict()
+            item_dict = self.__check_size(item_dict)
+            item_dict = self.__clean_dict(item_dict)
             try:
-                item_dict = ItemAdapter(item).asdict()
-                item_dict = self.__check_size(item_dict)
-                item_dict = self.__clean_dict(item_dict)
                 _columns = ', '.join(item_dict.keys())
+                updated_values = ', '.join(i[0]+"='" + i[1]+"'" for i in item_dict.items() if i[0] != 'url')
                 values = ", ".join("'{}'".format(k) for k in item_dict.values())
-                sql = "INSERT INTO sro.{} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE fio='{}'".format(table_name, _columns, values, item_dict['fio'])
+                sql = "INSERT INTO sro.{} ({}) VALUES ({})".format(
+                    table_name,
+                    _columns,
+                    values)
                 self._cursor.execute(sql)
                 print(sql)
             except:
-                logging.warning("DB_ERROR " + item['url'])
+                url = item_dict.pop('url')
+                _columns = ', '.join(item_dict.keys())
+                set_str = ", ".join("{}=%s".format(k) for k in item_dict.keys())
+                sql = "UPDATE sro.{} SET {} WHERE url = '{}'".format(table_name, set_str, url)
+                self._cursor.execute(sql, list(item_dict.values()))
+                print(sql)
         self._connection.commit()
 
     def get_all_urls(self, table_name):

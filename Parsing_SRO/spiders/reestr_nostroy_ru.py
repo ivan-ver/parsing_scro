@@ -7,7 +7,7 @@ from Parsing_SRO.utils_.db_company import Database
 
 
 class SroSpiderSpider(scrapy.Spider):
-    page = 260
+    page = 120
     name = 'reestr_nostroy_ru'
     main_url = 'http://reestr.nostroy.ru'
     start_urls = [
@@ -23,7 +23,7 @@ class SroSpiderSpider(scrapy.Spider):
         'DOWNLOAD_TIMEOUT': 10,
         # 'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         # 'CONCURRENT_REQUESTS_PER_IP': 10,
-        'CONCURRENT_REQUESTS': 12
+        'CONCURRENT_REQUESTS': 40
     }
 
     def __init__(self):
@@ -32,7 +32,7 @@ class SroSpiderSpider(scrapy.Spider):
 
     def start_requests(self):
         for url in self.start_urls:
-            yield Request(url=url+str(self.page), callback=self.parse, dont_filter=True)
+            yield Request(url=url + str(self.page), callback=self.parse, dont_filter=True)
 
     def parse(self, response):
 
