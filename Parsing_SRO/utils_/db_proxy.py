@@ -8,9 +8,9 @@ class DB_proxy():
     _connection = None
     _cursor = None
     protocols = {
-        '1': 'http://',
-        '2': 'https://',
-        '0': 'http://',
+        1: 'http://',
+        2: 'https://',
+        0: 'http://'
     }
 
     def __init__(self):
@@ -45,7 +45,7 @@ class DB_proxy():
 
     def get_all_proxy(self):
         self._cursor.execute("""
-            SELECT type, host, port FROM `proxy`.`proxy_broker` WHERE type < 3
+            SELECT type, host, port FROM `proxy`.`proxy_checked` WHERE type < 3
         """)
         df = self._cursor.fetchall()
         return [self.protocols[i['type']] + i['host'] + ':' + str(i['port']) for i in df]

@@ -7,12 +7,12 @@ from Parsing_SRO.utils_.db_company import Database
 
 
 class SroSpiderSpider(scrapy.Spider):
-    page = 4000
+    page = 4010
     name = 'reestr_nostroy_ru'
     main_url = 'http://reestr.nostroy.ru'
     start_urls = [
         # 'http://reestr.nostroy.ru/reestr',
-        'http://reestr.nostroy.ru/reestr?sort=m.id&direction=asc&page=4000',
+        'http://reestr.nostroy.ru/reestr?sort=m.id&direction=asc&page=4010',
     ]
     logging.basicConfig(filename='logogo.log',
                         level=logging.INFO)
@@ -23,7 +23,7 @@ class SroSpiderSpider(scrapy.Spider):
         'DOWNLOAD_TIMEOUT': 10,
         # 'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         # 'CONCURRENT_REQUESTS_PER_IP': 10,
-        'CONCURRENT_REQUESTS': 2
+        'CONCURRENT_REQUESTS': 8
     }
 
     def __init__(self):
@@ -77,7 +77,6 @@ class SroSpiderSpider(scrapy.Spider):
                 key = text_list[0] + " " + text_list[1]
                 value = row.xpath('td/text()').get()
                 table_values[key] = value
-
             company['title'] = table_values['Полное наименование'].replace('\n', '')
             company['reg_date'] = table_values['Дата регистрации']
             company['reg_number'] = table_values['Регистрационный номер']
@@ -87,8 +86,8 @@ class SroSpiderSpider(scrapy.Spider):
         except:
             print('Main_info_ERROR')
         yield Request(url=response.url + '/insurance',
-                      callback=self.insurance_parse,
-                      cb_kwargs=dict(company=company))
+                    callback=self.insurance_parse,
+                    cb_kwargs=dict(company=company))
 
     def insurance_parse(self, response, company):
         if len(response.xpath("//table[@class='items table']/tbody/tr").extract()) == 3:
@@ -102,11 +101,14 @@ class SroSpiderSpider(scrapy.Spider):
             for row1 in response.xpath("//table[@class='items table']/tbody/tr")[3:]:
                 k = 0
                 for i in row1.xpath("td"):
-                    table[head_table[k]].append(i.xpath("text()").get())
+                    if i.xpath("text()").get():
+                        table[head_table[k]].append(i.xpath("text()").get())
+                    else:
+                        table[list(table.keys())[k]].append(' ')
                     k += 1
-            company['insurance_amount'] = ','.join(table['Размер страховой суммы'])
-            company['insurance_company_title'] = ','.join(table['Наименование страховой компании'])
-            company['end_insurance_date'] = ','.join(table['Окончание действия договора'])
+            company['insurance_amount'] = ', '.join(table['Размер страховой суммы'])
+            company['insurance_company_title'] = ', '.join(table['Наименование страховой компании'])
+            company['end_insurance_date'] = ', '.join(table['Окончание действия договора'])
             self.all_urls.append(company['url'])
         yield company
 

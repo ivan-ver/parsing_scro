@@ -54,18 +54,18 @@ class Database:
 
     def save_items(self, items):
         for item in items:
+            table_name = item.__class__.__name__
             try:
-                table_name = item.__class__.__name__
                 item_dict = ItemAdapter(item).asdict()
                 item_dict = self.__check_size(item_dict)
                 item_dict = self.__clean_dict(item_dict)
                 _columns = ', '.join(item_dict.keys())
                 values = ", ".join("'{}'".format(k) for k in item_dict.values())
-                sql = "INSERT IGNORE INTO sro.{} ({}) VALUES ({})".format(table_name, _columns, values)
-                print(sql)
+                sql = "INSERT INTO sro.{} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE fio='{}'".format(table_name, _columns, values, item_dict['fio'])
                 self._cursor.execute(sql)
-            except pymysql.err.IntegrityError:
-                logging.warning("DB_Error URL:" + str(item['url']))
+                print(sql)
+            except:
+                logging.warning("DB_ERROR " + item['url'])
         self._connection.commit()
 
     def get_all_urls(self, table_name):
