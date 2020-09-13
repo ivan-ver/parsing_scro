@@ -7,7 +7,7 @@ from Parsing_SRO.utils_.db_company import Database
 
 
 class SroSpiderSpider(scrapy.Spider):
-    page = 210
+    page = 260
     name = 'reestr_nostroy_ru'
     main_url = 'http://reestr.nostroy.ru'
     start_urls = [
@@ -35,7 +35,7 @@ class SroSpiderSpider(scrapy.Spider):
             yield Request(url=url+str(self.page), callback=self.parse, dont_filter=True)
 
     def parse(self, response):
-        self.page += 1
+
         print("page # " + str(self.page))
         table = response.xpath("//table[@class='items table table-selectable-row table-striped']/tbody/tr")
         for row in table:
@@ -61,6 +61,7 @@ class SroSpiderSpider(scrapy.Spider):
         except:
             logging.warning("No nex page")
         logging.info("page # " + str(self.page))
+        self.page += 1
         if next_page:
             try:
                 yield Request(url=self.main_url + next_page, callback=self.parse, dont_filter=True)
@@ -113,6 +114,3 @@ class SroSpiderSpider(scrapy.Spider):
             self.all_urls.append(company['url'])
         yield company
 
-    @staticmethod
-    def close(spider, reason):
-        return super().close(spider, reason)
