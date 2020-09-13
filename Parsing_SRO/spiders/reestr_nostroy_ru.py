@@ -7,12 +7,12 @@ from Parsing_SRO.utils_.db_company import Database
 
 
 class SroSpiderSpider(scrapy.Spider):
-    page = 4010
+    page = 210
     name = 'reestr_nostroy_ru'
     main_url = 'http://reestr.nostroy.ru'
     start_urls = [
         # 'http://reestr.nostroy.ru/reestr',
-        'http://reestr.nostroy.ru/reestr?sort=m.id&direction=asc&page=4010',
+        'http://reestr.nostroy.ru/reestr?sort=m.id&direction=asc&page=',
     ]
     logging.basicConfig(filename='logogo.log',
                         level=logging.INFO)
@@ -23,7 +23,7 @@ class SroSpiderSpider(scrapy.Spider):
         'DOWNLOAD_TIMEOUT': 10,
         # 'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         # 'CONCURRENT_REQUESTS_PER_IP': 10,
-        'CONCURRENT_REQUESTS': 8
+        'CONCURRENT_REQUESTS': 12
     }
 
     def __init__(self):
@@ -32,7 +32,7 @@ class SroSpiderSpider(scrapy.Spider):
 
     def start_requests(self):
         for url in self.start_urls:
-            yield Request(url=url, callback=self.parse, dont_filter=True)
+            yield Request(url=url+str(self.page), callback=self.parse, dont_filter=True)
 
     def parse(self, response):
         self.page += 1
@@ -109,6 +109,7 @@ class SroSpiderSpider(scrapy.Spider):
             company['insurance_amount'] = ', '.join(table['Размер страховой суммы'])
             company['insurance_company_title'] = ', '.join(table['Наименование страховой компании'])
             company['end_insurance_date'] = ', '.join(table['Окончание действия договора'])
+            company['insurance_telephone'] = ', '.join(table['Контактные телефоны'])
             self.all_urls.append(company['url'])
         yield company
 
