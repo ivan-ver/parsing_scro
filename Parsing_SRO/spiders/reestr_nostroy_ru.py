@@ -7,7 +7,7 @@ from Parsing_SRO.utils_.db_company import Database
 
 
 class SroSpiderSpider(scrapy.Spider):
-    page = 120
+    page = 3820
     name = 'reestr_nostroy_ru'
     main_url = 'http://reestr.nostroy.ru'
     start_urls = [
@@ -19,11 +19,11 @@ class SroSpiderSpider(scrapy.Spider):
     all_urls = None
 
     custom_settings = {
-        'DOWNLOAD_DELAY': 1,
+        'DOWNLOAD_DELAY': 2,
         'DOWNLOAD_TIMEOUT': 10,
         # 'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
         # 'CONCURRENT_REQUESTS_PER_IP': 10,
-        'CONCURRENT_REQUESTS': 40
+        'CONCURRENT_REQUESTS': 10
     }
 
     def __init__(self):
@@ -41,17 +41,17 @@ class SroSpiderSpider(scrapy.Spider):
         for row in table:
             try:
                 company_url = self.main_url + row.xpath('@rel').get()
-                # if company_url not in self.all_urls:
-                company = reestr_nostroy_ru()
-                company['sro'] = row.xpath("td[7]/text()").get()
-                company['ogrn'] = row.xpath("td[4]/text()").get()
-                company['inn'] = row.xpath("td[3]/text()").get()
-                company['status'] = row.xpath("td[5]/text()").extract()[1].strip()
-                yield Request(url=company_url, callback=self.main_info_parse,
-                              dont_filter=True,
-                              cb_kwargs={'company': company})
-                # else:
-                #     continue
+                if company_url not in self.all_urls:
+                    company = reestr_nostroy_ru()
+                    company['sro'] = row.xpath("td[7]/text()").get()
+                    company['ogrn'] = row.xpath("td[4]/text()").get()
+                    company['inn'] = row.xpath("td[3]/text()").get()
+                    company['status'] = row.xpath("td[5]/text()").extract()[1].strip()
+                    yield Request(url=company_url, callback=self.main_info_parse,
+                                  dont_filter=True,
+                                  cb_kwargs={'company': company})
+                else:
+                    continue
             except BaseException:
                 logging.warning(
                     "Spider URL:" + self.main_url + row.xpath('@rel').get() + " exept: " + str(BaseException))
