@@ -56,10 +56,10 @@ PROXY_POOL_ENABLED = True
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
    # 'Parsing_SRO.middlewares.ParsingSroDownloaderMiddleware': 500,
-   # 'Parsing_SRO.ProxyMiddleware.ProxyMiddleware': 500,
+   'Parsing_SRO.ProxyMiddleware.ProxyMiddleware': 500,
 }
 
-ROTATED_PROXY_ENABLED = True
+# ROTATED_PROXY_ENABLED = True
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
