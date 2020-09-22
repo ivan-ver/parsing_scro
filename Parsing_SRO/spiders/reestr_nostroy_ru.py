@@ -7,7 +7,7 @@ from Parsing_SRO.utils_.db_company import Database
 
 
 class SroSpiderSpider(scrapy.Spider):
-    page = 4391
+    page = 4685
     name = 'reestr_nostroy_ru'
     main_url = 'http://reestr.nostroy.ru'
     start_urls = [
