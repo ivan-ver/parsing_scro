@@ -81,3 +81,4 @@ class Database:
         req = """SELECT url FROM sro.{}""".format(table_name)
         self._cursor.execute(req)
         return [url['url'] for url in self._cursor.fetchall()]
+
